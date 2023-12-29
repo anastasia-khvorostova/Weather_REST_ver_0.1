@@ -1,0 +1,44 @@
+package com.example.weather_rest_api;
+
+
+import com.fasterxml.jackson.databind.*;
+
+import java.io.*;
+import java.net.*;
+import java.util.*;
+
+public class WeatherRestApiApplication {
+    private static final String OPENWEATHERMAP_API_URL = "https://api.openweathermap.org/data/2.5/weather?q=%s&appid=%s&units=metric";
+    private static final String API_KEY = "API_KEY";
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Enter city name: ");
+        String city = scanner.nextLine();
+
+        try {
+            URL url = new URL(String.format(OPENWEATHERMAP_API_URL, city, API_KEY));
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+
+            try (Scanner responseScanner = new Scanner(connection.getInputStream())) {
+                StringBuilder responseBuilder = new StringBuilder();
+                while (responseScanner.hasNextLine()) {
+                    responseBuilder.append(responseScanner.nextLine());
+                }
+
+                ObjectMapper objectMapper = new ObjectMapper();
+                JsonNode jsonNode = objectMapper.readTree(responseBuilder.toString());
+
+                double temperature = jsonNode.get("main").get("temp").asDouble();
+                int humidity = jsonNode.get("main").get("humidity").asInt();
+                double windSpeed = jsonNode.get("wind").get("speed").asDouble();
+
+                String weatherData = String.format("Temperature: %.2f°C, Humidity: %d%%, Wind Speed: %.2f m/s", temperature, humidity, windSpeed);
+                System.out.println(weatherData);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
